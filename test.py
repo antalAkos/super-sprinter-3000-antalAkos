@@ -5,6 +5,7 @@ def open_csv():
         table = [element.replace("\n", "").split(",") for element in lines]
         return table
 
+
 def write_csv(table):
     with open("story.csv", "w") as file:
         for record in table:
