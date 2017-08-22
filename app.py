@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, request
 import uuid
 import csv
+import data_manager
 
 app = Flask(__name__)
 
@@ -10,69 +11,55 @@ def route_story():
     title = "Super Sprinter 3000 - Add new Story"
     do = "Create"
     if request.method == "POST":
-        ID = generate_request_id()
-        username = request.form["username"]
-        user_story = request.form["user_story"]
-        criteria = request.form["criteria"]
-        business_value = request.form["business_value"]
-        estimation = request.form["estimation"]
-        status = request.form["status"]
-        fieldnames = ["ID", "username", "user_story", "criteria", 
-                      "business_value", "estimation", "status"]
-        
-        with open("story.csv", "a") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writerow({"ID": ID, "username": username, "user_story": user_story,
-                             "criteria": criteria, "business_value": business_value, 
-                             "estimation": estimation, "status": status
-                             })
+        ID = data_manager.generate_request_id()
+        story_lst = list(data_manager.request_form(ID))
+        data_manager.append_csv("a", story_lst)
         return redirect("/list")
     return render_template("form.html", title=title, do=do)
 
 
-@app.route("/story/<story_id>")
+@app.route("/story/edit/<story_id>", methods=["GET"])
 def story_id(story_id=0):
+    action = ""
     title = "Super Sprinter 3000 - Edit Story"
     do = "Update"
-    table = open_csv()
+    table = data_manager.open_csv()
     for sublist in table:
         if sublist[0] == story_id:
-            return render_template("form.html", username=sublist[1], 
-                                   user_story=sublist[2], criteria=sublist[3], 
-                                   business_value=sublist[4], estimation=sublist[5],
-                                   status=sublist[6], title=title, do=do)
+            action = "/story/" + story_id
+            return render_template("form.html", username=sublist[1], user_story=sublist[2], criteria=sublist[3], business_value=sublist[4], estimation=sublist[5], status=sublist[6], title=title, do=do, action=action)
+    return redirect("/story/<story_id>")
 
+
+@app.route("/story/<story_id>", methods=["POST"])
+def update(story_id=0):
+    if request.method == "POST": 
+        table = data_manager.open_csv() 
+        ID = story_id
+        story_lst = data_manager.request_form(ID)
+        for index, sublist in enumerate(table):
+            if sublist[0] == ID:
+                table[index] = story_lst
+        data_manager.write_csv(table)
+    return redirect("/")
+      
 
 @app.route("/")
 @app.route("/list", methods=["GET", "POST"])
 def list_route():
-    table = open_csv()
-    if request.method == "POST":
-        for sublist in table:
-            if sublist[0] == story_id:
-                table = table.remove(sublist)
-                write_csv(table)
-        
+    table = data_manager.open_csv()
     return render_template("list.html", table=table)
 
 
-def generate_request_id():
-    new_id = uuid.uuid4()
-    return str(new_id)
-
-
-def open_csv():
-    with open("story.csv", "r") as file:
-        lines = file.readlines()
-        table = [element.replace("\n", "").split(",") for element in lines]
-        return table
-
-
-def write_csv(table):
-    with open("story.csv", "w") as file:
-        writer = csv.writer(file)
-        writer.writerows(table)
-
+@app.route("/delete/<story_id>", methods=["POST"])
+def delete(story_id):
+    table = data_manager.open_csv()
+    for sublist in table:
+        if story_id in sublist:
+            table.remove(sublist)
+    data_manager.write_csv(table)
+    return redirect('/')
+        
 
 if __name__ == "__main__":
     app.secret_key = "mysecretkey11"  # Change the content of this string

@@ -35,12 +35,12 @@
                 <td>{{sublist[5]}}</td>
                 <td>{{sublist[6]}}</td>
                 <td>
-                    <a href="/story/{{sublist[0]}}">
+                    <a href="/story/edit/{{sublist[0]}}">
                         <img src="https://image.freepik.com/free-icon/edit-interface-symbol_318-61460.jpg" alt="Edit" width="20px" height="20px" border="0"/>
                     </a>
                 </td>
                 <td>
-                    <form action="/list" method='POST'>
+                    <form action="/delete/{{sublist[0]}}" method='POST'>
                         <input name="delete" type="image" src="https://image.flaticon.com/icons/svg/17/17152.svg" alt="Delete" width="20x" height="20px" border="0">
                     </form>
                 </td>
